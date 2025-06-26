@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scientific Calculator</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5; /* Light gray background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .calculator-container {
+            background-color: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            max-width: 450px;
+            width: 100%;
+            overflow: hidden;
+            border: 1px solid #e0e0e0;
+        }
+        .display-area {
+            background-color: #2c3e50; /* Dark blue-gray */
+            color: #ecf0f1; /* Light gray text */
+            padding: 25px 20px;
+            text-align: right;
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+        }
+        .display-area input {
+            background: none;
+            border: none;
+            color: #ecf0f1;
+            font-size: 2.5rem;
+            width: 100%;
+            outline: none;
+            text-align: right;
+            /* Removed pointer-events: none; to allow direct interaction */
+        }
+        .display-area .previous-operand {
+            font-size: 1rem;
+            opacity: 0.7;
+            min-height: 1.2em; /* Ensure space even if empty */
+        }
+        .display-area .current-operand {
+            font-size: 2.5rem;
+            font-weight: 600;
+        }
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr); /* 5 columns for numbers and operators */
+            gap: 10px;
+            padding: 20px;
+        }
+        .calculator-button {
+            background-color: #fdfdfd;
+            color: #333;
+            font-size: 1.25rem;
+            font-weight: 500;
+            padding: 15px 0;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .calculator-button:hover {
+            background-color: #e2e8f0; /* Light hover */
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        .calculator-button:active {
+            background-color: #cbd5e0; /* Darker active */
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        }
+        .operator {
+            background-color: #e0f2f7; /* Light blue */
+            color: #2980b9; /* Darker blue text */
+        }
+        .operator:hover {
+            background-color: #cce9f5;
+        }
+        .operator:active {
+            background-color: #a7d3ec;
+        }
+        .equals {
+            background-color: #27ae60; /* Green */
+            color: #ffffff;
+            grid-column: span 2; /* Span two columns */
+        }
+        .equals:hover {
+            background-color: #219d55;
+        }
+        .equals:active {
+            background-color: #1c884c;
+        }
+        .clear, .all-clear, .backspace {
+            background-color: #f7e7e7; /* Light red */
+            color: #c0392b; /* Dark red text */
+        }
+        .clear:hover, .all-clear:hover, .backspace:hover {
+            background-color: #f2dcdc;
+        }
+        .clear:active, .all-clear:active, .backspace:active {
+            background-color: #ebcaca;
+        }
+        .function-button {
+            background-color: #f2f7e7; /* Light green */
+            color: #2c3e50; /* Dark text */
+            font-size: 0.95rem; /* Smaller font for functions */
+            padding: 15px 5px;
+        }
+        .function-button:hover {
+            background-color: #e5f0d2;
+        }
+        .function-button:active {
+            background-color: #d8e6bf;
+        }
+        .tab-container {
+            display: flex;
+            background-color: #ebf4f5;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .tab-button {
+            flex-grow: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 3px solid transparent;
+            transition: border-bottom 0.2s ease, color 0.2s ease;
+        }
+        .tab-button.active {
+            border-bottom-color: #2980b9; /* Active tab color */
+            color: #2980b9;
+        }
+        .tab-content {
+            padding: 20px;
+        }
+        .hidden {
+            display: none;
+        }
+        .formula-item {
+            background-color: #f8f8f8;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+        .formula-item h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+        .formula-item p {
+            font-size: 0.95rem;
+            color: #555;
+            margin-bottom: 10px;
+        }
+        .formula-item .formula-text {
+            background-color: #eaf3f5;
+            padding: 10px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1rem;
+            color: #0d47a1; /* Dark blue for formula */
+            overflow-x: auto;
+            white-space: pre-wrap; /* Preserve formatting but wrap */
+            margin-bottom: 10px;
+        }
+        .formula-item .variables-list {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        .formula-item .variables-list strong {
+            color: #333;
+        }
+        .copy-button {
+            background-color: #007bff; /* Blue for copy */
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: none;
+            transition: background-color 0.2s ease;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .copy-button:hover {
+            background-color: #0056b3;
+        }
+        .copy-button:active {
+            background-color: #004499;
+        }
+        .flex-row-wrap {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            padding: 15px 20px;
+            background-color: #f0f2f5;
+            border-top: 1px solid #e0e0e0;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+        }
+        .action-button { /* Still used for memory buttons */
+            background-color: #6c757d; /* Gray */
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            border: none;
+            transition: background-color 0.2s ease;
+            font-size: 1rem;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .action-button:hover {
+            background-color: #5a6268;
+        }
+        .action-button:active {
+            background-color: #4e555b;
+        }
+
+        /* Message Box Styling */
+        #message-box {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+            transform: translateY(20px);
+            z-index: 1000;
+        }
+        #message-box.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        #message-box.bg-red-600 {
+            background-color: #dc3545; /* Red for errors */
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            body {
+                padding: 0; /* Remove padding to make it full screen */
+            }
+            .calculator-container {
+                border-radius: 0;
+                box-shadow: none;
+                max-width: 100%;
+                height: 100vh; /* Full height on small screens */
+                display: flex;
+                flex-direction: column;
+            }
+            .display-area {
+                border-radius: 0;
+            }
+            .button-grid {
+                grid-template-columns: repeat(4, 1fr); /* 4 columns on small screens */
+                padding: 15px;
+            }
+            .function-button {
+                font-size: 0.85rem;
+                padding: 12px 2px;
+            }
+            .equals {
+                grid-column: span 2; /* Still span 2 */
+            }
+            .flex-row-wrap {
+                padding: 10px 15px;
+                border-bottom-left-radius: 0;
+                border-bottom-right-radius: 0;
+            }
+            .tab-content {
+                flex-grow: 1; /* Allow content to grow */
+                overflow-y: auto; /* Enable scrolling for formulas */
+            }
+            #message-box {
+                bottom: 10px;
+                right: 10px;
+                left: 10px;
+                text-align: center;
+                transform: translateY(10px);
+            }
+        }
+    </style>
+</head>
+<body class="selection:bg-blue-300 selection:text-blue-900">
+    <div class="calculator-container">
+        <!-- Tabs -->
+        <div class="tab-container">
+            <div class="tab-button active" data-tab="calculator">Calculator</div>
+            <div class="tab-button" data-tab="formulas">Formulas</div>
+        </div>
+
+        <!-- Calculator Tab Content -->
+        <div id="calculator-tab" class="tab-content">
+            <div class="display-area rounded-b-none">
+                <div class="previous-operand" id="previous-operand"></div>
+                <!-- Removed readonly and pointer-events: none; -->
+                <input type="text" class="current-operand" id="current-operand" value="0">
+            </div>
+
+            <div class="button-grid">
+                <!-- Row 1: Clear/Backspace/Constants -->
+                <button class="calculator-button clear" data-action="clear">C</button>
+                <button class="calculator-button all-clear" data-action="all-clear">AC</button>
+                <button class="calculator-button backspace" data-action="backspace">DEL</button>
+                <button class="calculator-button operator" data-action="operator" data-value="/">&divide;</button>
+                <button class="calculator-button function-button" data-action="function" data-value="pi">&pi;</button>
+
+                <!-- Row 2: Basic Ops / Trig Functions -->
+                <button class="calculator-button function-button" data-action="function" data-value="sin">sin</button>
+                <button class="calculator-button function-button" data-action="function" data-value="cos">cos</button>
+                <button class="calculator-button function-button" data-action="function" data-value="tan">tan</button>
+                <button class="calculator-button operator" data-action="operator" data-value="*">&times;</button>
+                <button class="calculator-button function-button" data-action="function" data-value="e">e</button>
+
+                <!-- Row 3: Log/Exp Functions / Power -->
+                <button class="calculator-button function-button" data-action="function" data-value="log">log</button>
+                <button class="calculator-button function-button" data-action="function" data-value="ln">ln</button>
+                <button class="calculator-button function-button" data-action="function" data-value="exp">e<sup>x</sup></button>
+                <button class="calculator-button operator" data-action="operator" data-value="-">-</button>
+                <button class="calculator-button function-button" data-action="function" data-value="^">x<sup>y</sup></button>
+
+
+                <!-- Row 4: Numbers -->
+                <button class="calculator-button" data-action="number" data-value="7">7</button>
+                <button class="calculator-button" data-action="number" data-value="8">8</button>
+                <button class="calculator-button" data-action="number" data-value="9">9</button>
+                <button class="calculator-button operator" data-action="operator" data-value="+">+</button>
+                <button class="calculator-button function-button" data-action="function" data-value="sqrt">&radic;x</button>
+
+
+                <!-- Row 5: Numbers / Parenthesis / Factorial-->
+                <button class="calculator-button" data-action="number" data-value="4">4</button>
+                <button class="calculator-button" data-action="number" data-value="5">5</button>
+                <button class="calculator-button" data-action="number" data-value="6">6</button>
+                <button class="calculator-button function-button" data-action="function" data-value="open_paren">(</button>
+                <button class="calculator-button function-button" data-action="function" data-value="close_paren">)</button>
+
+
+                <!-- Row 6: Numbers / Decimal / Equals -->
+                <button class="calculator-button" data-action="number" data-value="1">1</button>
+                <button class="calculator-button" data-action="number" data-value="2">2</button>
+                <button class="calculator-button" data-action="number" data-value="3">3</button>
+                <button class="calculator-button function-button" data-action="function" data-value="factorial">x!</button>
+                <button class="calculator-button equals" data-action="equals">=</button>
+
+
+                <!-- Row 7: Zero / Dot / Percentage -->
+                <button class="calculator-button" data-action="number" data-value="0">0</button>
+                <button class="calculator-button" data-action="number" data-value=".">.</button>
+                <button class="calculator-button function-button" data-action="function" data-value="percent">%</button>
+                <button class="calculator-button function-button" data-action="function" data-value="inverse">1/x</button>
+                <button class="calculator-button function-button" data-action="function" data-value="square">x<sup>2</sup></button>
+
+            </div>
+
+            <!-- Memory Buttons (Copy/Paste buttons removed) -->
+            <div class="flex-row-wrap">
+                <button class="action-button" data-action="memory" data-value="MC">MC</button>
+                <button class="action-button" data-action="memory" data-value="MR">MR</button>
+                <button class="action-button" data-action="memory" data-value="M+">M+</button>
+                <button class="action-button" data-action="memory" data-value="M-">M-</button>
+                <!-- Copy/Paste buttons removed from here. Use standard Ctrl+C/V on the input field. -->
+            </div>
+        </div>
+
+        <!-- Formulas Tab Content -->
+        <div id="formulas-tab" class="tab-content hidden">
+            <div id="formulas-list">
+                <!-- Formula items will be dynamically inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Message Box -->
+    <div id="message-box" class="fixed bottom-5 right-5 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg hidden" style="z-index: 1000;">
+        Copied to clipboard!
+    </div>
+
+    <script>
+        const currentOperandInput = document.getElementById('current-operand');
+        const previousOperandDiv = document.getElementById('previous-operand');
+        const calculatorButtons = document.querySelectorAll('.calculator-button');
+        const actionButtons = document.querySelectorAll('.action-button');
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const formulasListDiv = document.getElementById('formulas-list');
+        // Removed references to copyResultBtn and pasteInputBtn
+        const messageBox = document.getElementById('message-box');
+
+        let currentOperand = '0';
+        let previousOperand = '';
+        let operation = null;
+        let waitingForSecondOperand = false;
+        let memory = 0;
+        let lastResult = null; // Store the last computed result for 'Ans' or further operations
+
+        // --- Core Calculator Logic Functions ---
+
+        function updateDisplay() {
+            currentOperandInput.value = currentOperand;
+            previousOperandDiv.textContent = previousOperand;
+            // Place cursor at the end for better user experience when typing
+            currentOperandInput.scrollLeft = currentOperandInput.scrollWidth;
+        }
+
+        // Handles numerical input from buttons AND keyboard
+        function appendNumber(input) {
+            if (currentOperand === 'Error') { // Clear error on new number input
+                currentOperand = '0';
+            }
+            if (waitingForSecondOperand) {
+                currentOperand = input;
+                waitingForSecondOperand = false;
+            } else {
+                if (currentOperand === '0' && input !== '.') {
+                    currentOperand = input;
+                } else if (input === '.' && currentOperand.includes('.')) {
+                    // Do nothing if decimal already exists
+                } else {
+                    currentOperand += input;
+                }
+            }
+            updateDisplay();
+        }
+
+        function chooseOperation(op) {
+            if (currentOperand === '' || currentOperand === 'Error') return;
+
+            // If an operation was already chosen and we're not waiting for a second operand,
+            // calculate the previous result before setting the new operation.
+            if (previousOperand !== '' && !waitingForSecondOperand) {
+                calculate();
+            }
+
+            operation = op;
+            previousOperand = currentOperand + ' ' + op;
+            currentOperand = ''; // Clear current for next input
+            waitingForSecondOperand = true;
+            updateDisplay();
+        }
+
+        function calculate() {
+            let computation;
+            let prev;
+            let current;
+
+            // Extract the numerical part from previousOperand
+            const prevOperandString = previousOperand.replace(/\s*[\+\-\*\/%^]\s*$/, ''); // Remove operator/power symbol
+            prev = parseFloat(prevOperandString);
+            current = parseFloat(currentOperand);
+
+            // Handle cases where a result is displayed and an operator is pressed
+            if (operation === null && previousOperand === '' && !isNaN(current)) {
+                currentOperand = formatResult(current);
+                lastResult = current;
+                updateDisplay();
+                return;
+            }
+
+            if (isNaN(prev) || isNaN(current)) {
+                currentOperand = 'Error: Invalid calculation';
+                previousOperand = '';
+                operation = null;
+                waitingForSecondOperand = false;
+                updateDisplay();
+                return;
+            }
+
+            try {
+                switch (operation) {
+                    case '+':
+                        computation = prev + current;
+                        break;
+                    case '-':
+                        computation = prev - current;
+                        break;
+                    case '*':
+                        computation = prev * current;
+                        break;
+                    case '/':
+                        if (current === 0) {
+                            throw new Error("Division by zero");
+                        }
+                        computation = prev / current;
+                        break;
+                    case '^': // Custom power operation (x^y)
+                        computation = Math.pow(prev, current);
+                        break;
+                    default:
+                        // If no valid operation, treat it as a number input, or simply current value
+                        computation = current;
+                        break;
+                }
+
+                currentOperand = formatResult(computation);
+                lastResult = computation;
+                operation = undefined; // Clear operation after calculation
+                previousOperand = ''; // Clear previous display
+                waitingForSecondOperand = true; // Ready for new input or chained operation
+            } catch (error) {
+                currentOperand = 'Error: ' + error.message;
+                previousOperand = '';
+                operation = null;
+                waitingForSecondOperand = false;
+            }
+            updateDisplay();
+        }
+
+        function clearDisplay() {
+            currentOperand = '0';
+            previousOperand = '';
+            operation = null;
+            waitingForSecondOperand = false;
+            updateDisplay();
+        }
+
+        function allClear() {
+            clearDisplay();
+            memory = 0; // Clear memory as well
+            lastResult = null;
+        }
+
+        function deleteLastChar() {
+            if (currentOperand === 'Error') {
+                clearDisplay();
+                return;
+            }
+            if (waitingForSecondOperand && previousOperand === '') { // Result on display
+                currentOperand = '0';
+                waitingForSecondOperand = false;
+            } else if (currentOperand.length > 1) {
+                currentOperand = currentOperand.slice(0, -1);
+            } else {
+                currentOperand = '0';
+            }
+            updateDisplay();
+        }
+
+        function factorial(n) {
+            if (n < 0 || !Number.isInteger(n)) {
+                return 'Error: Invalid input for factorial (must be non-negative integer)';
+            }
+            if (n === 0 || n === 1) {
+                return 1;
+            }
+            let res = 1;
+            for (let i = 2; i <= n; i++) {
+                res *= i;
+            }
+            return res;
+        }
+
+        function formatResult(value) {
+            // Handle scientific notation for very large/small numbers
+            if (Math.abs(value) > 1e15 || (Math.abs(value) < 1e-15 && value !== 0)) {
+                return value.toExponential(7); // 7 decimal places for exponent
+            }
+            // Limit decimal places to avoid excessive precision
+            if (value.toString().length > 12) { // Arbitrary limit for display
+                return parseFloat(value.toFixed(10)).toString(); // Fix to 10 decimal places and remove trailing zeros
+            }
+            return value.toString();
+        }
+
+        function handleScientificFunction(func) {
+            let num = parseFloat(currentOperand);
+            if (currentOperand === 'Error') {
+                clearDisplay(); // Clear error state before new function
+                return;
+            }
+
+            if (isNaN(num) && func !== 'pi' && func !== 'e' && func !== 'open_paren' && func !== 'close_paren') {
+                currentOperand = 'Error: Invalid input for function';
+                updateDisplay();
+                return;
+            }
+
+            let result;
+            try {
+                switch (func) {
+                    case 'sin':
+                        result = Math.sin(num * (Math.PI / 180)); // Degrees to radians
+                        break;
+                    case 'cos':
+                        result = Math.cos(num * (Math.PI / 180)); // Degrees to radians
+                        break;
+                    case 'tan':
+                        result = Math.tan(num * (Math.PI / 180)); // Degrees to radians
+                        if (Math.abs(result) > 1e10) throw new Error("Undefined (tan 90/270)"); // Handle tan(90)
+                        break;
+                    case 'log': // Base 10
+                        if (num <= 0) throw new Error("Log of non-positive number");
+                        result = Math.log10(num);
+                        break;
+                    case 'ln': // Natural log (base e)
+                        if (num <= 0) throw new Error("Log of non-positive number");
+                        result = Math.log(num);
+                        break;
+                    case 'exp': // e^x
+                        result = Math.exp(num);
+                        break;
+                    case 'sqrt':
+                        if (num < 0) throw new Error("Square root of negative number");
+                        result = Math.sqrt(num);
+                        break;
+                    case '^': // x^y, prepares for next input
+                        previousOperand = currentOperand + '^';
+                        currentOperand = '';
+                        operation = '^'; // Set operation to '^'
+                        waitingForSecondOperand = true;
+                        updateDisplay();
+                        return; // Exit as calculation is not immediate
+                    case 'factorial':
+                        result = factorial(num);
+                        if (typeof result === 'string' && result.startsWith('Error')) {
+                            throw new Error(result.split(': ')[1]);
+                        }
+                        break;
+                    case 'percent':
+                        result = num / 100;
+                        break;
+                    case 'inverse': // 1/x
+                        if (num === 0) throw new Error("Division by zero");
+                        result = 1 / num;
+                        break;
+                    case 'square': // x^2
+                        result = num * num;
+                        break;
+                    case 'pi':
+                        result = Math.PI;
+                        break;
+                    case 'e':
+                        result = Math.E;
+                        break;
+                    case 'open_paren':
+                        // If current operand is '0' or a result, start new expression
+                        if (currentOperand === '0' || waitingForSecondOperand) {
+                            currentOperand = '(';
+                        } else { // Otherwise, append parenthesis
+                            currentOperand += '(';
+                        }
+                        waitingForSecondOperand = false; // Allow further input
+                        updateDisplay();
+                        return;
+                    case 'close_paren':
+                        currentOperand += ')';
+                        updateDisplay();
+                        return;
+                    default:
+                        currentOperand = 'Error: Unknown function';
+                        updateDisplay();
+                        return;
+                }
+                currentOperand = formatResult(result);
+                lastResult = result;
+                waitingForSecondOperand = true; // After function, ready for new number/op
+                previousOperand = ''; // Clear previous as function typically acts on current
+            } catch (error) {
+                currentOperand = 'Error: ' + error.message;
+                previousOperand = '';
+                operation = null;
+                waitingForSecondOperand = false;
+            }
+            updateDisplay();
+        }
+
+        // --- Memory Functions ---
+        function handleMemory(action) {
+            if (currentOperand === 'Error') { // Cannot use memory on error state
+                return;
+            }
+            switch (action) {
+                case 'MC': // Memory Clear
+                    memory = 0;
+                    showMessage("Memory Cleared (MC)");
+                    break;
+                case 'MR': // Memory Recall
+                    currentOperand = formatResult(memory);
+                    waitingForSecondOperand = true;
+                    showMessage("Memory Recalled (MR)");
+                    break;
+                case 'M+': // Memory Add
+                    memory += parseFloat(currentOperand);
+                    showMessage("Added to Memory (M+)");
+                    break;
+                case 'M-': // Memory Subtract
+                    memory -= parseFloat(currentOperand);
+                    showMessage("Subtracted from Memory (M-)");
+                    break;
+            }
+            updateDisplay();
+        }
+
+        // --- Message Box Function ---
+        let messageTimeout;
+        function showMessage(message, isError = false) {
+            messageBox.textContent = message;
+            messageBox.classList.remove('hidden');
+            messageBox.classList.add('show'); // For transition effect
+            if (isError) {
+                messageBox.classList.add('bg-red-600');
+                messageBox.classList.remove('bg-gray-800');
+            } else {
+                messageBox.classList.remove('bg-red-600');
+                messageBox.classList.add('bg-gray-800');
+            }
+
+            clearTimeout(messageTimeout);
+            messageTimeout = setTimeout(() => {
+                messageBox.classList.remove('show');
+                // Give some time for fade out before hiding completely
+                setTimeout(() => {
+                    messageBox.classList.add('hidden');
+                }, 300); // Matches transition duration
+            }, 2500); // Display for 2.5 seconds
+        }
+
+        // --- Copy to Clipboard (only from custom function, direct paste is OS controlled) ---
+        async function copyToClipboard(text) {
+            try {
+                // Using document.execCommand('copy') for better iframe compatibility
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-9999px';
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showMessage("Copied to clipboard!");
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+                showMessage("Failed to copy! Please try manually (Ctrl+C/Cmd+C).", true);
+            }
+        }
+
+
+        // --- Event Listeners ---
+
+        // Handle keyboard input on the currentOperandInput field
+        currentOperandInput.addEventListener('input', (event) => {
+            // Update the internal currentOperand based on direct typing
+            currentOperand = event.target.value;
+            // Ensure display is updated to reflect input, potentially formatting it.
+            // If the user types an invalid char, the next calculation will show "Error".
+            updateDisplay();
+        });
+
+        currentOperandInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                calculate();
+                event.preventDefault(); // Prevent default Enter key behavior (e.g., form submission)
+            } else if (event.key === 'c' && (event.ctrlKey || event.metaKey)) {
+                // Allow native copy, show message to confirm.
+                copyToClipboard(currentOperandInput.value); // Use existing copy function
+            } else if (event.key === 'v' && (event.ctrlKey || event.metaKey)) {
+                // Native paste is handled by the browser directly editing the input field.
+                // We just need to make sure our internal state aligns after paste.
+                // The 'input' event listener already handles this.
+                showMessage("Pasted via keyboard shortcut (Ctrl+V/Cmd+V).");
+            } else if (event.key === 'Backspace') {
+                // Allow native backspace behavior for direct input without conflicting with DEL button.
+                // The `deleteLastChar` function is for button clicks.
+            }
+            // For other keys, just let native input behavior work.
+        });
+
+
+        // Number and Operator buttons
+        calculatorButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const action = button.dataset.action;
+                const value = button.dataset.value;
+
+                // When a button is clicked, we explicitly update the currentOperand
+                // This overrides any direct keyboard input for a moment, ensuring consistency
+                // and then focuses the input again so user can continue typing.
+                if (action === 'number' || action === 'decimal') {
+                    appendNumber(value);
+                } else if (action === 'operator') {
+                    chooseOperation(value);
+                } else if (action === 'equals') {
+                    calculate();
+                } else if (action === 'clear') {
+                    clearDisplay();
+                } else if (action === 'all-clear') {
+                    allClear();
+                } else if (action === 'backspace') {
+                    deleteLastChar(); // Use the calculator's DEL logic
+                } else if (action === 'function') {
+                    handleScientificFunction(value);
+                }
+                currentOperandInput.focus(); // Keep input focused after button click for keyboard entry
+            });
+        });
+
+        // Memory buttons
+        actionButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const action = button.dataset.action;
+                const value = button.dataset.value;
+
+                if (action === 'memory') {
+                    handleMemory(value);
+                }
+                currentOperandInput.focus(); // Keep input focused after button click
+            });
+        });
+
+        // --- Tab Switching Logic ---
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const targetTab = button.dataset.tab;
+
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+
+                tabContents.forEach(content => content.classList.add('hidden'));
+                document.getElementById(`${targetTab}-tab`).classList.remove('hidden');
+
+                // If switching to formulas tab, ensure they are rendered and MathJax processed
+                if (targetTab === 'formulas') {
+                    renderFormulas();
+                } else if (targetTab === 'calculator') {
+                    currentOperandInput.focus(); // Focus input when returning to calculator tab
+                }
+            });
+        });
+
+        // --- Formulas Data (Expanded) ---
+        const scientificFormulas = [
+            {
+                name: "Pythagorean Theorem",
+                category: "Mathematics - Geometry",
+                description: "Relates the sides of a right-angled triangle.",
+                formula: "$$a^2 + b^2 = c^2$$",
+                variables: "a, b: lengths of the legs; c: length of the hypotenuse."
+            },
+            {
+                name: "Quadratic Formula",
+                category: "Mathematics - Algebra",
+                description: "Solves for the roots of a quadratic equation $ax^2 + bx + c = 0$.",
+                formula: "$$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$$",
+                variables: "a, b, c: coefficients of the quadratic equation; x: roots of the equation."
+            },
+            {
+                name: "Area of a Triangle (Base and Height)",
+                category: "Mathematics - Geometry",
+                description: "Calculates the area of a triangle given its base and height.",
+                formula: "$$A = \\frac{1}{2}bh$$",
+                variables: "A: area; b: base length; h: height."
+            },
+            {
+                name: "Volume of a Cylinder",
+                category: "Mathematics - Geometry",
+                description: "Calculates the volume of a right circular cylinder.",
+                formula: "$$V = \\pi r^2 h$$",
+                variables: "V: volume; r: radius of the base; h: height; $\\pi$: Pi (approximately 3.14159)."
+            },
+            {
+                name: "Compound Interest",
+                category: "Mathematics - Finance",
+                description: "Calculates the future value of an investment with compound interest.",
+                formula: "$$A = P(1 + \\frac{r}{n})^{nt}$$",
+                variables: "A: future value; P: principal; r: annual interest rate; n: number of times interest is compounded per year; t: time in years."
+            },
+            {
+                name: "Newton's Second Law of Motion",
+                category: "Physics - Mechanics",
+                description: "Relates force, mass, and acceleration.",
+                formula: "$$F = ma$$",
+                variables: "F: force; m: mass; a: acceleration."
+            },
+            {
+                name: "Kinetic Energy",
+                category: "Physics - Mechanics",
+                description: "The energy an object possesses due to its motion.",
+                formula: "$$KE = \\frac{1}{2}mv^2$$",
+                variables: "KE: kinetic energy; m: mass; v: velocity."
+            },
+            {
+                name: "Ohm's Law",
+                category: "Physics - Electricity",
+                description: "Relates voltage, current, and resistance in an electrical circuit.",
+                formula: "$$V = IR$$",
+                variables: "V: voltage; I: current; R: resistance."
+            },
+            {
+                name: "Pressure",
+                category: "Physics - Fluid Dynamics",
+                description: "Force applied perpendicular to the surface of an object per unit area.",
+                formula: "$$P = \\frac{F}{A}$$",
+                variables: "P: pressure; F: force; A: area."
+            },
+            {
+                name: "Work Done",
+                category: "Physics - Mechanics",
+                description: "Work done by a constant force.",
+                formula: "$$W = Fd \\cos\\theta$$",
+                variables: "W: work; F: force; d: displacement; $\\theta$: angle between force and displacement."
+            },
+            {
+                name: "Power (Work Rate)",
+                category: "Physics - Mechanics",
+                description: "The rate at which work is done.",
+                formula: "$$P = \\frac{W}{t}$$",
+                variables: "P: power; W: work; t: time."
+            },
+            {
+                name: "Ideal Gas Law",
+                category: "Chemistry - Thermodynamics",
+                description: "Relates pressure, volume, temperature, and moles of an ideal gas.",
+                formula: "$$PV = nRT$$",
+                variables: "P: pressure; V: volume; n: moles; R: ideal gas constant; T: temperature."
+            },
+            {
+                name: "Molarity",
+                category: "Chemistry - Solutions",
+                description: "Concentration of a solution in terms of moles of solute per liter of solution.",
+                formula: "$$M = \\frac{\\text{moles of solute}}{\\text{liters of solution}}$$",
+                variables: "M: Molarity."
+            },
+            {
+                name: "Definition of Logarithm",
+                category: "Mathematics - Logarithms",
+                description: "If $b^y = x$, then $y$ is the logarithm of $x$ to the base $b$.",
+                formula: "$$y = \\log_b(x) \\iff b^y = x$$",
+                variables: "b: base (b > 0, b $\\ne$ 1); x: argument (x > 0); y: exponent."
+            },
+            {
+                name: "Logarithm Product Rule",
+                category: "Mathematics - Logarithms",
+                description: "The logarithm of a product is the sum of the logarithms.",
+                formula: "$$\\log_b(xy) = \\log_b(x) + \\log_b(y)$$",
+                variables: "b: base; x, y: arguments."
+            },
+            {
+                name: "Logarithm Quotient Rule",
+                category: "Mathematics - Logarithms",
+                description: "The logarithm of a quotient is the difference of the logarithms.",
+                formula: "$$\\log_b(\\frac{x}{y}) = \\log_b(x) - \\log_b(y)$$",
+                variables: "b: base; x, y: arguments."
+            },
+            {
+                name: "Logarithm Power Rule",
+                category: "Mathematics - Logarithms",
+                description: "The logarithm of a number raised to a power is the power multiplied by the logarithm of the number.",
+                formula: "$$\\log_b(x^n) = n \\cdot \\log_b(x)$$",
+                variables: "b: base; x: argument; n: exponent."
+            },
+            {
+                name: "Change of Base Formula",
+                category: "Mathematics - Logarithms",
+                description: "Converts logarithms from one base to another.",
+                formula: "$$\\log_b(x) = \\frac{\\log_c(x)}{\\log_c(b)}$$",
+                variables: "b: original base; c: new base; x: argument."
+            },
+            {
+                name: "Logarithm of One",
+                category: "Mathematics - Logarithms",
+                description: "The logarithm of 1 to any base is 0.",
+                formula: "$$\\log_b(1) = 0$$",
+                variables: "b: base."
+            },
+            {
+                name: "Logarithm of Base",
+                category: "Mathematics - Logarithms",
+                description: "The logarithm of the base itself is 1.",
+                formula: "$$\\log_b(b) = 1$$",
+                variables: "b: base."
+            },
+            {
+                name: "Inverse Property of Logarithms",
+                category: "Mathematics - Logarithms",
+                description: "Logarithmic and exponential functions with the same base are inverse operations.",
+                formula: "$$b^{\\log_b(x)} = x \\quad \\text{and} \\quad \\log_b(b^x) = x$$",
+                variables: "b: base; x: argument."
+            },
+            {
+                name: "Law of Sines",
+                category: "Mathematics - Trigonometry",
+                description: "Relates the lengths of the sides of a triangle to the sines of its angles.",
+                formula: "$$\\frac{a}{\\sin A} = \\frac{b}{\\sin B} = \\frac{c}{\\sin C}$$",
+                variables: "a, b, c: side lengths; A, B, C: opposite angles."
+            },
+            {
+                name: "Law of Cosines",
+                category: "Mathematics - Trigonometry",
+                description: "Relates the lengths of the sides of a triangle to the cosine of one of its angles.",
+                formula: "$$c^2 = a^2 + b^2 - 2ab \\cos C$$",
+                variables: "a, b, c: side lengths; C: angle opposite side c."
+            },
+            {
+                name: "Wave Speed",
+                category: "Physics - Waves",
+                description: "Calculates the speed of a wave given its frequency and wavelength.",
+                formula: "$$v = f\\lambda$$",
+                variables: "v: wave speed; f: frequency; $\\lambda$: wavelength."
+            },
+            {
+                name: "Snell's Law",
+                category: "Physics - Optics",
+                description: "Describes the relationship between the angles of incidence and refraction of a wave passing through a boundary between two different isotropic media.",
+                formula: "$$n_1 \\sin\\theta_1 = n_2 \\sin\\theta_2$$",
+                variables: "n1, n2: refractive indices of the first and second media; $\\theta_1$: angle of incidence; $\\theta_2$: angle of refraction."
+            },
+            {
+                name: "Specific Heat Capacity",
+                category: "Physics - Thermodynamics",
+                description: "Relates heat added or removed to temperature change.",
+                formula: "$$Q = mc\\Delta T$$",
+                variables: "Q: heat energy; m: mass; c: specific heat capacity; $\\Delta T$: change in temperature."
+            },
+            {
+                name: "Latent Heat",
+                category: "Physics - Thermodynamics",
+                description: "Heat absorbed or released during a phase change.",
+                formula: "$$Q = mL$$",
+                variables: "Q: heat energy; m: mass; L: latent heat (of fusion or vaporization)."
+            },
+            {
+                name: "Volume of a Cone",
+                category: "Mathematics - Geometry",
+                description: "Calculates the volume of a right circular cone.",
+                formula: "$$V = \\frac{1}{3}\\pi r^2 h$$",
+                variables: "V: volume; r: radius of the base; h: height; $\\pi$: Pi."
+            },
+            {
+                name: "Surface Area of a Sphere",
+                category: "Mathematics - Geometry",
+                description: "Calculates the total surface area of a sphere.",
+                formula: "$$A = 4\\pi r^2$$",
+                variables: "A: surface area; r: radius; $\\pi$: Pi."
+            },
+            {
+                name: "Molar Mass",
+                category: "Chemistry - Stoichiometry",
+                description: "The mass of one mole of a substance.",
+                formula: "$$\\text{Molar Mass} = \\sum (\\text{atomic mass of element} \\times \\text{number of atoms})$$",
+                variables: "Summation of atomic masses of all atoms in a molecule."
+            },
+            {
+                name: "Density (Mass/Volume)",
+                category: "General Physics/Chemistry",
+                description: "Defines density as mass per unit volume.",
+                formula: "$$\\rho = \\frac{m}{V}$$",
+                variables: "$\\rho$: density; m: mass; V: volume."
+            },
+            {
+                name: "Average (Mean)",
+                category: "Mathematics - Statistics",
+                description: "The sum of a set of numbers divided by the count of numbers in the set.",
+                formula: "$$\\bar{x} = \\frac{\\sum x_i}{n}$$",
+                variables: "$\\bar{x}$: mean; $\\sum x_i$: sum of all values; n: number of values."
+            },
+            {
+                name: "Standard Deviation (Population)",
+                category: "Mathematics - Statistics",
+                description: "Measures the amount of variation or dispersion of a set of values.",
+                formula: "$$\\sigma = \\sqrt{\\frac{\\sum (x_i - \\mu)^2}{N}}$$",
+                variables: "$\\sigma$: standard deviation; $x_i$: each value; $\\mu$: population mean; N: number of values in the population."
+            }
+        ];
+
+
+        function renderFormulas() {
+            formulasListDiv.innerHTML = ''; // Clear previous formulas
+            const categories = {};
+
+            // Group formulas by category
+            scientificFormulas.forEach(formula => {
+                if (!categories[formula.category]) {
+                    categories[formula.category] = [];
+                }
+                categories[formula.category].push(formula);
+            });
+
+            // Render categories and then formulas within each
+            for (const category in categories) {
+                const categoryHeader = document.createElement('h2');
+                categoryHeader.classList.add('text-xl', 'font-semibold', 'text-gray-700', 'mt-6', 'mb-3', 'border-b-2', 'pb-1', 'border-blue-300');
+                categoryHeader.textContent = category;
+                formulasListDiv.appendChild(categoryHeader);
+
+                categories[category].forEach((formula, index) => {
+                    const formulaItem = document.createElement('div');
+                    formulaItem.classList.add('formula-item');
+                    // Use a unique ID for each formula-text element within its category or globally unique
+                    const formulaTextId = `formula-text-${category.replace(/[^a-zA-Z0-9]/g, '-')}-${index}`;
+                    formulaItem.innerHTML = `
+                        <h3>${formula.name}</h3>
+                        <p>${formula.description}</p>
+                        <div class="formula-text" id="${formulaTextId}">${formula.formula}</div>
+                        <p class="variables-list"><strong>Variables:</strong> ${formula.variables}</p>
+                        <button class="copy-button" data-formula-text-id="${formulaTextId}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clipboard" viewBox="0 0 16 16">
+                                <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
+                                <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/>
+                            </svg>
+                            Copy Formula
+                        </button>
+                    `;
+                    formulasListDiv.appendChild(formulaItem);
+                });
+            }
+
+
+            // Add event listeners for copy formula buttons
+            formulasListDiv.querySelectorAll('.copy-button').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const formulaTextId = event.currentTarget.dataset.formulaTextId;
+                    const formulaTextElement = document.getElementById(formulaTextId);
+                    copyToClipboard(formulaTextElement.textContent || formulaTextElement.innerText);
+                });
+            });
+
+            // After rendering, process LaTeX with MathJax (if MathJax is loaded)
+            if (typeof MathJax !== 'undefined' && typeof MathJax.typesetPromise !== 'undefined') {
+                MathJax.typesetPromise();
+            }
+        }
+
+        // Initial display update
+        updateDisplay();
+        renderFormulas(); // Render formulas on initial load too
+
+        // Load MathJax for LaTeX rendering
+        const mathJaxScript = document.createElement('script');
+        mathJaxScript.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+        mathJaxScript.async = true;
+        document.head.appendChild(mathJaxScript);
+
+    </script>
+</body>
+</html>
